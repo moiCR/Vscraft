@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{styleUri}}" rel="stylesheet">
+    <script src="{{scriptUri}}" defer></script>
+</head>
+
+<body>
+    <h2>
+        Minecraft Project Creator
+    </h2>
+
+    <div class>
+        <label for="pluginName">Artifact ID</label>
+        <input type="text" id="pluginName" placeholder="Ej: SuperSword">
+    </div>
+
+    <div class="grid grid-cols-2 gap-2 mb-4">
+        <div>
+            <label for="buildTool">Build System</label>
+            <select id="buildTool">
+                <option value="Maven">Maven</option>
+                <option value="Gradle">Gradle</option>
+            </select>
+        </div>
+        <div>
+            <label for="apiType">API</label>
+            <select id="apiType">
+                <option value="Spigot">Spigot</option>
+                <option value="Paper">Paper</option>
+            </select>
+        </div>
+    </div>
+
+    <div>
+        <label for="minecraftVersions">Version</label>
+        <select id="minecraftVersions">
+            <option value="" disabled selected>Loading Versions...</option>
+        </select>
+    </div>
+
+    <button id="btnCreate">
+        🚀 Create Project
+    </button>
+</body>
+</html>
