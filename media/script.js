@@ -1,5 +1,3 @@
-// 1. ELIMINADA la línea de require("os"). Eso no existe en el frontend.
-
 const vscode = acquireVsCodeApi();
 
 window.addEventListener('load', () => load());
