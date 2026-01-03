@@ -1,2 +1,2 @@
 # Vscraft
-Generador de proyectos para plugins de Minecraft (Spigot/Paper).
+Project generator for Minecraft plugins (Spigot/Paper).
