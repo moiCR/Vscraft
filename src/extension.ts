@@ -37,7 +37,7 @@ async function createProjectLogic(data: any): Promise<void> {
         openLabel: "Select Destination Directory"
     });
 
-    if (!folderSelection || folderSelection.length === 0) return;
+    if (!folderSelection || folderSelection.length === 0) {return;}
     
     const location = folderSelection[0].fsPath;
 
