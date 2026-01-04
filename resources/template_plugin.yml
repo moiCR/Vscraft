@@ -1,0 +1,5 @@
+name: {{NAME}}
+version: {{VERSION}}
+main: {{MAIN_CLASS}}
+api-version: {{API_VERSION}}
+description: "Plugin created with VSCraft (www.github.com/moiCR/Vscraft)"

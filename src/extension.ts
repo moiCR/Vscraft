@@ -3,8 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { SidebarProvider } from './provider/SidebarProvider';
 
+let extensionRoot: string;
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Vscraft has been activated');
+    extensionRoot = context.extensionPath;
+
     const sidebarProvider = new SidebarProvider(context.extensionUri);
 
     context.subscriptions.push(
@@ -15,10 +19,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const createCommand = vscode.commands.registerCommand('vscraft.createProject', async (data) => {
-        if (!data) {
-            return;
-        }
-
+        if (!data) {return;}
         await createProjectLogic(data);
     });
 
@@ -36,9 +37,8 @@ async function createProjectLogic(data: any): Promise<void> {
         openLabel: "Select Destination Directory"
     });
 
-    if (!folderSelection || folderSelection.length === 0) {
-        return;
-    }
+    if (!folderSelection || folderSelection.length === 0) return;
+    
     const location = folderSelection[0].fsPath;
 
     const groupID = await vscode.window.showInputBox({
@@ -47,49 +47,17 @@ async function createProjectLogic(data: any): Promise<void> {
         value: `me.example.${artifactId.toLowerCase()}`
     });
 
-    if (!groupID) { return; }
+    if (!groupID) {return;}
 
     const root = path.join(location, artifactId);
-    const packagePath = groupID.replace(/\./g, path.sep);
-    const javaSrcPath = path.join(root, 'src', 'main', 'java', packagePath);
-    const resourcesPath = path.join(root, 'src', 'main', 'resources');
 
     try {
-        if (fs.existsSync(root)) {
-            vscode.window.showErrorMessage(`❌ The directory "${artifactId}" already exists inside that folder.`);
-            return;
+        if (!fs.existsSync(root)) {
+            fs.mkdirSync(root, { recursive: true });
         }
 
-        fs.mkdirSync(javaSrcPath, { recursive: true });
-        fs.mkdirSync(resourcesPath, { recursive: true });
-
-        const mainClass = `${groupID}.${artifactId}`;
-        const pluginYmlContent = `name: ${artifactId}
-version: 1.0-SNAPSHOT
-main: ${mainClass}
-api-version: 1.20
-description: Creado con VSCraft
-commands:
-`;
-        fs.writeFileSync(path.join(resourcesPath, 'plugin.yml'), pluginYmlContent);
-        const javaContent = `package ${groupID};
-
-import org.bukkit.plugin.java.JavaPlugin;
-
-public final class ${artifactId} extends JavaPlugin {
-
-    @Override
-    public void onEnable() {
-        getLogger().info("${artifactId} has been enabled!");
-    }
-
-    @Override
-    public void onDisable() {
-        // Plugin shutdown logic
-    }
-}
-`;
-        fs.writeFileSync(path.join(javaSrcPath, `${artifactId}.java`), javaContent);
+        createJavaClass(root, groupID, artifactId);
+        createPluginYml(root, groupID, artifactId, apiType, mcVersion);
 
         if (buildTool === 'Maven') {
             createPOMFile(root, groupID, artifactId, apiType, mcVersion);
@@ -114,96 +82,93 @@ public final class ${artifactId} extends JavaPlugin {
     }
 }
 
+function createPluginYml(root: string, groupID: string, pluginName: string, api: string, version: string){
+    const variables = {
+        'NAME': pluginName,
+        'VERSION': "1.0-SNAPSHOT",
+        'MAIN_CLASS': `${groupID}.${pluginName}`,
+        'API_VERSION': version,
+    };
 
-function createPOMFile(root: string, groupID: string, pluginName: string, api: string, version : string) {
-    const dependency = api === 'Paper'
-        ? `<dependency>
-            <groupId>io.papermc.paper</groupId>
-            <artifactId>paper-api</artifactId>
-            <version>${version}-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>`
-        : `<dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>${version}-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>`;
+    try{
+        let templateContent = fs.readFileSync(path.join(extensionRoot, 'resources', 'template_plugin.yml'), 'utf8');
 
-    const repositories = api === 'Paper'
-        ? `<repository>
-            <id>papermc</id>
-            <url>https://repo.papermc.io/repository/maven-public/</url>
-        </repository>`
-        : `<repository>
-            <id>spigotmc-repo</id>
-            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
-        </repository>`;
+        Object.entries(variables).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            templateContent = templateContent.replace(regex, value);
+        });
 
-    const content = `<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-
-    <groupId>${groupID}</groupId>
-    <artifactId>${pluginName}</artifactId>
-    <version>1.0-SNAPSHOT</version>
-    <packaging>jar</packaging>
-
-    <name>${pluginName}</name>
-
-    <properties>
-        <java.version>21</java.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <repositories>
-        ${repositories}
-    </repositories>
-
-    <dependencies>
-        ${dependency}
-    </dependencies>
-</project>`;
-
-    fs.writeFileSync(path.join(root, 'pom.xml'), content);
-}
-
-function createGradleFile(root: string, groupID: string, pluginName: string, api: string, version : string) {
-    const repoUrl = api === 'Paper' 
-        ? 'https://repo.papermc.io/repository/maven-public/' 
-        : 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/';
+        const resourcesPath = path.join(root, 'src', 'main', 'resources');
         
-    const dependency = api === 'Paper' 
-        ? `compileOnly 'io.papermc.paper:paper-api:${version}-R0.1-SNAPSHOT'`
-        : `compileOnly 'org.spigotmc:spigot-api:${version}-R0.1-SNAPSHOT'`;
+        if (!fs.existsSync(resourcesPath)) {
+            fs.mkdirSync(resourcesPath, { recursive: true });
+        }
 
-    const content = `plugins {
-    id 'java'
-}
-
-group = '${groupID}'
-version = '1.0-SNAPSHOT'
-
-repositories {
-    mavenCentral()
-    maven {
-        name = '${api}MC'
-        url = uri('${repoUrl}')
+        fs.writeFileSync(path.join(resourcesPath, 'plugin.yml'), templateContent);
+    }catch(error){
+        throw new Error("Plugin YML: " + error);
     }
 }
 
-dependencies {
-    ${dependency}
-}
+function createJavaClass(root: string, groupID: string, pluginName: string){
+    const variables = {
+        'PACKAGE': groupID,
+        'CLASS_NAME': pluginName
+    };
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+    const packagePath = groupID.replace(/\./g, path.sep);
+    
+    const javaFullPath = path.join(root, 'src', 'main', 'java', packagePath);
+
+    try{
+        let templateContent = fs.readFileSync(path.join(extensionRoot, 'resources', 'template_main.java'), 'utf8');
+
+        Object.entries(variables).forEach(([key, value]) => {
+            const regex = new RegExp(`{{${key}}}`, 'g');
+            templateContent = templateContent.replace(regex, value);
+        });
+
+        if (!fs.existsSync(javaFullPath)) {
+            fs.mkdirSync(javaFullPath, { recursive: true });
+        }
+
+        fs.writeFileSync(path.join(javaFullPath, `${pluginName}.java`), templateContent);
+    }catch(error){
+        throw new Error("Java Class: " + error);
     }
 }
-`;
-    fs.writeFileSync(path.join(root, 'build.gradle'), content);
-    fs.writeFileSync(path.join(root, 'settings.gradle'), `rootProject.name = '${pluginName}'`);
+
+function createPOMFile(root: string, groupID: string, pluginName: string, api: string, version: string) {
+    const dependencyGroupId = api === 'Paper' ? 'io.papermc.paper' : 'org.spigotmc';
+    const dependencyArtifactId = api === 'Paper' ? 'paper-api' : 'spigot-api';
+    const repoId = api === 'Paper' ? 'papermc-repo' : 'spigotmc-repo';
+    const repoUrl = api === 'Paper' ? 'https://repo.papermc.io/repository/maven-public/' : 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/';
+
+    const variables = {
+        'GROUP': groupID,
+        'ARTIFACT': pluginName,
+        'REPO.ID': repoId,
+        'REPO.URL': repoUrl,
+        'API.GROUP': dependencyGroupId,
+        'API.ARTIFACT': dependencyArtifactId,
+        'API.VERSION': version
+    };
+
+    try{
+        let templateContent = fs.readFileSync(path.join(extensionRoot, 'resources', 'template_pom.xml'), 'utf8');
+
+        Object.entries(variables).forEach(([key, value]) => {
+            const safeKey = key.replace(/\./g, '\\.');
+            const regex = new RegExp(`{{${safeKey}}}`, 'g');
+            templateContent = templateContent.replace(regex, value);
+        });
+
+        fs.writeFileSync(path.join(root, 'pom.xml'), templateContent);
+    }catch(error){
+        throw new Error("POM File: " + error);
+    }
+}
+
+function createGradleFile(root: string, groupID: string, pluginName: string, api: string, version: string) {
+
 }
