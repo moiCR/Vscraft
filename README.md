@@ -3,7 +3,7 @@ Project generator for Minecraft plugins (Spigot/Paper). This extension helps you
 
 ## Features
 - Generate complete plugin projects with proper directory structure
-- Support for both Maven and Gradle build systems
+- Support for both Maven
 - Automatic creation of plugin.yml with version and API version
 - Template-based Java class generation
 - Paper API version selection with auto-fetching latest versions from papermc.io
@@ -12,8 +12,7 @@ Project generator for Minecraft plugins (Spigot/Paper). This extension helps you
 - Clean and intuitive user interface
 - Cross-platform support
 - No external dependencies required
-- MIT license
-
+- Open source under MIT license
 
 ## Contributing
 
