@@ -18,8 +18,8 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
     webView.webview.onDidReceiveMessage(async (data) => {
       if (data.type === "createProject") {
-        const { artifactId, buildTool, apiType, mcVersion} = data.value;
-        vscode.commands.executeCommand('vscraft.createProject', { artifactId, buildTool, apiType , mcVersion});
+        const { artifactId, language, buildTool, apiType, mcVersion } = data.value;
+        vscode.commands.executeCommand('vscraft.createProject', { artifactId, language, buildTool, apiType, mcVersion });
       }
 
       if (data.type === "onError") {

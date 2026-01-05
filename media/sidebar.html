@@ -18,7 +18,15 @@
         <input type="text" id="pluginName" placeholder="Ej: SuperSword">
     </div>
 
-    <div class="grid grid-cols-2 gap-2 mb-4">
+
+    <div>
+        <div>
+            <label for="language">Language</label>
+            <select id="language">
+                <option value="Java">Java</option>
+                <option disabled value="Kotlin">Kotlin (Not implemented yet)</option>
+            </select>
+        </div>
         <div>
             <label for="buildTool">Build System</label>
             <select id="buildTool">
@@ -33,17 +41,19 @@
                 <option value="Spigot">Spigot</option>
             </select>
         </div>
+        <div>
+            <label for="minecraftVersions">Version</label>
+            <select id="minecraftVersions">
+                <option value="" disabled selected>Loading Versions...</option>
+            </select>
+        </div>
     </div>
 
-    <div>
-        <label for="minecraftVersions">Version</label>
-        <select id="minecraftVersions">
-            <option value="" disabled selected>Loading Versions...</option>
-        </select>
-    </div>
+
 
     <button id="btnCreate">
         🚀 Create Project
     </button>
 </body>
+
 </html>

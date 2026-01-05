@@ -21,6 +21,7 @@ function load() {
         const buildTool = document.getElementById('buildTool').value;
         const apiType = document.getElementById('apiType').value;
         const mcVersion = document.getElementById('minecraftVersions').value;
+        const lang = document.getElementById('language').value;
 
         if (!artifactId) {
             vscode.postMessage({
@@ -35,7 +36,8 @@ function load() {
                 artifactId: artifactId,
                 buildTool: buildTool,
                 apiType: apiType,
-                mcVersion: mcVersion
+                mcVersion: mcVersion,
+                language: lang
             }
         });
     });
