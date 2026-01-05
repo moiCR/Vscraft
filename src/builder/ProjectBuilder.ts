@@ -3,8 +3,7 @@ import * as path from 'path';
 import * as vscode from 'vscode';
 
 export abstract class ProjectBuilder {
-
-
+    
     createDirectories(root: string): void {
         const resourcesPath = path.join(root, 'src', 'main', 'resources');
 
